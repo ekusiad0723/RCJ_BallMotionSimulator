@@ -4,17 +4,21 @@ import sys
 import tkinter
 import math
 
-robotSpeed = 8
-robotSize = 90
-robotX = 1200
-robotY = 601
+scale = 4
 
-ballSize = 30
+robotSpeed = 6
+robotSize = 22 * scale 
+robotX = 600
+robotY = 600
+robotCatchZone = 30
+robotForwarding = 4
+
+ballSize = 7.4 * scale
 ballX = 600
 ballY = 600
 
+touchDistancingDeg = 1 #内側からの距離補正の次数.2以上だと加速度が滑らかに,1だと無駄な安定な点ができない
 touchDistance = (robotSize+ballSize)/2
-
 root = tkinter.Tk()
 root.geometry("1200x1250")
 
@@ -35,18 +39,21 @@ def motion(r,the):
         while(the >= math.pi):
             the -= 2*math.pi
     x,y = getXY(r,the)
-    #print(r,360*the/2/math.pi,x,y)
+    print(r,360*the/2/math.pi,x,y)
     #以下に回り込みのアルゴリズムを記入
     if(the == 0):
         theSign = 1
     else:
         theSign = (abs(the)/the)
+
     if(r <= touchDistance):
-        return (1,-the + theSign*((r/touchDistance)**2)*3*math.pi/2 )
+        m = (1,-the + theSign*((r/touchDistance)**touchDistancingDeg)*3*math.pi/2 )
     elif(r > touchDistance and x >= -touchDistance):
-        return (1,-theSign*(math.pi - abs(the) + math.asin(touchDistance/r)))
+        m = (1,-theSign*(math.pi - abs(the) + math.asin(touchDistance/r)))
     elif(r > touchDistance and x < -touchDistance):
-        return (1,-theSign*(math.pi - abs(the) + math.atan((-x/abs(y))) - math.atan(((-x-touchDistance)/abs(y)))))
+        m = (1,-theSign*(math.pi - abs(the) + math.atan((-x/abs(y))) - math.atan(((-x-touchDistance)/abs(y)))))
+
+    return m
 
 def getRobotRD(ballR,ballThe):
     return ballR,-ballThe
@@ -76,6 +83,7 @@ def draw():
     global robotY
     global robotSize
     global robotSpeed
+    global robotCatchZone
 
     #dX,dY = getXY(getBallRD(motion(getRobotRD(getRD(robotX,robotY)))))
     rRD,theRD = getRD(robotX-ballX,robotY-ballY)
